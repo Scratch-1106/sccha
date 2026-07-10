@@ -1,1 +1,55 @@
-<h1>scchaへようこそ！</h1>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sccha チャットルーム</title>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
+        .chat-container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .messages { height: 300px; border: 1px solid #ddd; overflow-y: scroll; padding: 10px; margin-bottom: 10px; background: #fafafa; border-radius: 4px; }
+        .input-area { display: flex; gap: 10px; }
+        input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <h2>sccha チャットルーム</h2>
+    
+    <!-- メッセージが表示される場所 -->
+    <div class="messages" id="message-box">
+        <div><strong>システム:</strong> チャットルームへようこそ！</div>
+    </div>
+    
+    <!-- 文字を入力して送る場所 -->
+    <div class="input-area">
+        <input type="text" id="user-input" placeholder="メッセージを入力...">
+        <button onclick="sendMessage()">送信</button>
+    </div>
+</div>
+
+<script>
+    // 送信ボタンを押したときの動き（仮）
+    function sendMessage() {
+        const input = document.getElementById('user-input');
+        const box = document.getElementById('message-box');
+        
+        if (input.value.trim() !== "") {
+            // 画面に自分の文字を追加する
+            const newMsg = document.createElement('div');
+            newMsg.innerHTML = `<strong>あなた:</strong> ${input.value}`;
+            box.appendChild(newMsg);
+            
+            // 入力欄を空っぽにする
+            input.value = "";
+            // 一番下までスクロール
+            box.scrollTop = box.scrollHeight;
+        }
+    }
+</script>
+
+</body>
+</html>
