@@ -2,89 +2,60 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>sccha チャット</title>
     <style>
         body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
         .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        #login-screen { text-align: center; padding: 20px 0; }
-        #login-screen input { width: 80%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; }
-        .error-message { color: red; font-size: 0.9em; margin-bottom: 10px; font-weight: bold; }
+        #login-screen { text-align: center; }
         #main-screen { display: none; }
-        .layout { display: flex; gap: 20px; }
-        .sidebar { width: 150px; background: #e9ecef; padding: 15px; border-radius: 6px; }
-        .chat-area { flex: 1; }
-        .messages { height: 300px; border: 1px solid #ddd; overflow-y: scroll; padding: 10px; margin-bottom: 10px; background: #fafafa; }
-        .input-area { display: flex; gap: 10px; }
-        .input-area input { flex: 1; padding: 10px; border: 1px solid #ddd; }
-        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        input { width: 90%; padding: 10px; margin: 5px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>sccha チャットルーム</h2>
-    
     <div id="login-screen">
-        <h3>アカウント作成 / ログイン</h3>
-        
-        <div id="error-box" class="error-message"></div>
-        
-        <input type="text" id="username-input" placeholder="アカウントID（英数字、_-のみ）">
-        <input type="password" id="password-input" placeholder="パスワード">
-        <input type="text" id="nickname-input" placeholder="ニックネーム">
+        <h3>チャットに参加</h3>
+        <input type="text" id="username" placeholder="ID">
+        <input type="password" id="password" placeholder="パスワード">
+        <input type="text" id="nickname" placeholder="ニックネーム">
         <br>
-        <button onclick="loginTest()">アカウントを確定する</button>
+        <button onclick="login()">開始する</button>
     </div>
 
     <div id="main-screen">
-        <div style="text-align: right; margin-bottom: 10px;">
-            ログイン中: <strong id="current-nickname"></strong>
-        </div>
-        <div class="layout">
-            <div class="sidebar">
-                <h4>部屋一覧</h4>
-                <div style="padding:5px; background:white; border-radius:4px;">ロビー</div>
-            </div>
-            <div class="chat-area">
-                <div class="messages">
-                    <div><strong>システム:</strong> ログイン成功！次はマジのデータベースを作ります！</div>
-                </div>
-                <div class="input-area">
-                    <input type="text" placeholder="メッセージを入力...">
-                    <button>送信</button>
-                </div>
-            </div>
-        </div>
+        <h3>チャットルーム</h3>
+        <div id="chat-box" style="height:200px; border:1px solid #ccc; overflow-y:scroll;"></div>
+        <input type="text" id="message" placeholder="メッセージを入力">
+        <button onclick="sendMessage()">送信</button>
     </div>
 </div>
 
 <script>
-    function loginTest() {
-        const errorBox = document.getElementById('error-box');
-        errorBox.textContent = ""; // エラーをリセット
-
-        const idVal = document.getElementById('username-input').value.trim();
-        const passVal = document.getElementById('password-input').value.trim();
-        const nickVal = document.getElementById('nickname-input').value.trim();
-
-        // チェック1: 空っぽがないか
-        if (idVal === "" || passVal === "" || nickVal === "") {
-            errorBox.textContent = "エラー：すべての欄に入力してください！";
-            return;
-        }
-
-        // チェック2: IDの文字ルール
-        const idRegex = /^[a-zA-Z0-9_-]+$/;
-        if (!idRegex.test(idVal)) {
-            errorBox.textContent = "エラー：IDに使えるのは半角英数字とハイフン、アンダーバーのみです！";
-            return;
-        }
-
-        // 成功したら画面を切り替える
+    function login() {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('main-screen').style.display = 'block';
-        document.getElementById('current-nickname').textContent = nickVal;
+    }
+
+    async function sendMessage() {
+        const content = document.getElementById('message').value;
+        if (!content) return;
+
+        // ここで裏側のデータベースにデータを送る準備をしています
+        try {
+            await fetch('/api/send', {
+                method: 'POST',
+                body: JSON.stringify({
+                    content: content,
+                    nickname: document.getElementById('nickname').value
+                })
+            });
+            document.getElementById('message').value = "";
+            alert("送信しました！");
+        } catch (e) {
+            alert("エラーが発生しました...");
+        }
     }
 </script>
 
