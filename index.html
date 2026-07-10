@@ -3,32 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>sccha チャットルーム（記憶機能付き）</title>
+    <title>sccha チャットルーム（本格機能の準備）</title>
     <style>
         body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
         .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         
-        /* ログイン画面のスタイル */
+        /* ログイン画面 */
         #login-screen { text-align: center; padding: 20px 0; }
-        #login-screen input { width: 80%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; }
+        #login-screen input { width: 80%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        .rule-text { font-size: 0.8em; color: #666; margin-bottom: 15px; text-align: left; width: 80%; margin: 0 auto 15px auto; }
         
-        /* チャット画面のスタイル（最初は非表示） */
-        #chat-screen { display: none; }
+        /* メイン画面（部屋リストとチャット） */
+        #main-screen { display: none; }
+        .layout { display: flex; gap: 20px; }
+        .sidebar { width: 200px; background: #e9ecef; padding: 15px; border-radius: 6px; }
+        .chat-area { flex: 1; }
+        
+        .room-list { margin-top: 10px; }
+        .room-item { padding: 8px; background: white; margin-bottom: 5px; border-radius: 4px; cursor: pointer; border: 1px solid #eee; }
+        .room-item:hover { background: #e2e6ea; }
+        
         .messages { height: 300px; border: 1px solid #ddd; overflow-y: scroll; padding: 10px; margin-bottom: 10px; background: #fafafa; border-radius: 4px; }
         .input-area { display: flex; gap: 10px; }
         .input-area input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
         
-        /* プロフィールエリアのスタイル */
-        .profile-box { background: #e9ecef; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.9em; position: relative; }
-        .profile-edit { display: none; margin-top: 5px; }
-        .profile-edit input { width: 70%; padding: 5px; border: 1px solid #ddd; border-radius: 4px; }
-        
-        /* 共通ボタン */
         button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
         button:hover { background: #0056b3; }
-        .btn-sm { padding: 3px 8px; font-size: 0.8em; background: #6c757d; }
-        .logout-btn { position: absolute; top: 10px; right: 10px; background: #dc3545; }
-        .logout-btn:hover { background: #bd2130; }
+        .btn-sm { padding: 5px 10px; font-size: 0.8em; }
     </style>
 </head>
 <body>
@@ -37,126 +38,93 @@
     <h2>sccha チャットルーム</h2>
     
     <div id="login-screen">
-        <h3>アカウントを作成・ログイン</h3>
-        <p>チャットで使うユーザー名を決めてください</p>
-        <input type="text" id="username-input" placeholder="ユーザー名を入力...">
+        <h3>アカウント作成 / ログイン</h3>
+        <input type="text" id="username-input" placeholder="アカウントID（アルファベット、数字、_、-）">
+        <div class="rule-text">※半角英数字、ハイフン（-）、アンダーバー（_）のみ使用できます。</div>
+        
+        <input type="text" id="nickname-input" placeholder="ニックネーム（何でもOK）">
         <br>
-        <button onclick="login()">ログインする</button>
+        <button onclick="login()">アカウントを確定する</button>
     </div>
 
-    <div id="chat-screen">
+    <div id="main-screen">
+        <div style="margin-bottom: 15px; text-align: right; font-size: 0.9em;">
+            ログイン中: <strong id="current-nickname"></strong> (<span id="current-id"></span>)
+        </div>
         
-        <div class="profile-box">
-            <div>ユーザー名: <strong id="current-user"></strong></div>
-            <div>自己紹介: <span id="profile-text">未設定</span> 
-                <button class="btn-sm" onclick="toggleProfileEdit()">変更</button>
+        <div class="layout">
+            <div class="sidebar">
+                <h4>チャット部屋</h4>
+                <button class="btn-sm" onclick="createRoom()">＋ 部屋を作る</button>
+                <div class="room-list" id="room-list-box">
+                    <div class="room-item" style="background: #d1ecf1;">ロビー（全員用）</div>
+                </div>
             </div>
             
-            <div id="profile-edit-fields" class="profile-edit">
-                <input type="text" id="profile-input" placeholder="新しい自己紹介を入力...">
-                <button class="btn-sm" style="background:#28a745;" onclick="saveProfile()">保存</button>
+            <div class="chat-area">
+                <h4 id="current-room-title">部屋: ロビー</h4>
+                <div class="messages" id="message-box">
+                    <div><strong>システム:</strong> データを保存するデータベースをこれから裏側に繋ぎます！</div>
+                </div>
+                <div class="input-area">
+                    <input type="text" id="user-input" placeholder="メッセージを入力...">
+                    <button onclick="sendMessage()">送信</button>
+                </div>
             </div>
-
-            <button class="btn-sm logout-btn" onclick="logout()">ログアウト</button>
-        </div>
-        
-        <div class="messages" id="message-box">
-            <div><strong>システム:</strong> チャットルームへようこそ！</div>
-        </div>
-        
-        <div class="input-area">
-            <input type="text" id="user-input" placeholder="メッセージを入力...">
-            <button onclick="sendMessage()">送信</button>
         </div>
     </div>
 </div>
 
 <script>
-    let myUsername = "";
-    let myProfile = "";
+    let myUserId = "";
+    let myNickname = "";
 
-    // 【重要】ページが開いた瞬間、iPadの記憶をチェックする
-    window.onload = function() {
-        const savedName = localStorage.getItem('sccha_username');
-        const savedProfile = localStorage.getItem('sccha_profile');
-
-        if (savedName) {
-            // 記憶があったら自動ログイン
-            myUsername = savedName;
-            myProfile = savedProfile || "よろしくお願いします！";
-            showChatScreen();
-        }
-    };
-
-    // ログインボタンを押したときの動き
     function login() {
-        const usernameInput = document.getElementById('username-input');
-        if (usernameInput.value.trim() !== "") {
-            myUsername = usernameInput.value.trim();
-            myProfile = "よろしくお願いします！";
-            
-            // 【重要】iPadのブラウザに名前とプロフィールを保存する
-            localStorage.setItem('sccha_username', myUsername);
-            localStorage.setItem('sccha_profile', myProfile);
-            
-            showChatScreen();
-        } else {
-            alert("ユーザー名を入力してください！");
+        const idInput = document.getElementById('username-input').value.trim();
+        const nickInput = document.getElementById('nickname-input').value.trim();
+        
+        // アカウントIDのルール（半角英数字、ハイフン、アンダーバー）をチェックする魔法の呪文
+        const idRegex = /^[a-zA-Z0-9_-]+$/;
+        
+        if (!idRegex.test(idInput)) {
+            alert("アカウントIDはアルファベット、数字、ハイフン、アンダーバーのみにしてください！");
+            return;
         }
-    }
-
-    // チャット画面を表示する共通の関数
-    function showChatScreen() {
+        
+        if (nickInput === "") {
+            alert("ニックネームを入力してください！");
+            return;
+        }
+        
+        myUserId = idInput;
+        myNickname = nickInput;
+        
+        // 画面を切り替える
         document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('chat-screen').style.display = 'block';
-        document.getElementById('current-user').textContent = myUsername;
-        document.getElementById('profile-text').textContent = myProfile;
+        document.getElementById('main-screen').style.display = 'block';
+        document.getElementById('current-nickname').textContent = myNickname;
+        document.getElementById('current-id').textContent = "@" + myUserId;
     }
 
-    // プロフィール編集欄の表示切り替え
-    function toggleProfileEdit() {
-        const editFields = document.getElementById('profile-edit-fields');
-        if (editFields.style.display === 'block') {
-            editFields.style.display = 'none';
-        } else {
-            editFields.style.display = 'block';
-            document.getElementById('profile-input').value = myProfile;
+    function createRoom() {
+        const roomName = prompt("新しく作る部屋の名前を入力してください：");
+        if (roomName && roomName.trim() !== "") {
+            const listBox = document.getElementById('room-list-box');
+            const newRoom = document.createElement('div');
+            newRoom.className = 'room-item';
+            newRoom.textContent = roomName.trim();
+            listBox.appendChild(newRoom);
+            alert("部屋「" + roomName + "」を作りました！（※他の人と同期させるにはデータベースが必要です）");
         }
     }
 
-    // プロフィールを保存する動き
-    function saveProfile() {
-        const profileInput = document.getElementById('profile-input');
-        myProfile = profileInput.value.trim();
-        document.getElementById('profile-text').textContent = myProfile;
-        document.getElementById('profile-edit-fields').style.display = 'none';
-        
-        // 【重要】新しい自己紹介をブラウザに上書き保存する
-        localStorage.setItem('sccha_profile', myProfile);
-    }
-
-    // ログアウト（記憶を消す）
-    function logout() {
-        // 【重要】ブラウザの記憶を消す
-        localStorage.removeItem('sccha_username');
-        localStorage.removeItem('sccha_profile');
-        
-        // 画面をログインに戻す
-        document.getElementById('chat-screen').style.display = 'none';
-        document.getElementById('login-screen').style.display = 'block';
-        document.getElementById('username-input').value = "";
-    }
-
-    // 送信ボタンを押したときの動き
     function sendMessage() {
         const input = document.getElementById('user-input');
         const box = document.getElementById('message-box');
-        
         if (input.value.trim() !== "") {
             const newMsg = document.createElement('div');
-            newMsg.innerHTML = `<strong>${myUsername}:</strong> ${input.value}`;
+            newMsg.innerHTML = `<strong>${myNickname}:</strong> ${input.value}`;
             box.appendChild(newMsg);
-            
             input.value = "";
             box.scrollTop = box.scrollHeight;
         }
