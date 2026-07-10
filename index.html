@@ -17,8 +17,8 @@
 <div class="container">
     <div id="login-screen">
         <h3>チャットに参加</h3>
-        <input type="text" id="username" placeholder="ID">
-        <input type="password" id="password" placeholder="パスワード">
+        <input type="text" id="username" placeholder="ID (英数字・-・_)">
+        <input type="password" id="password" placeholder="パスワード (6文字以上)">
         <input type="text" id="nickname" placeholder="ニックネーム">
         <br>
         <button onclick="login()">開始する</button>
@@ -26,7 +26,7 @@
 
     <div id="main-screen">
         <h3>チャットルーム</h3>
-        <div id="chat-box" style="height:200px; border:1px solid #ccc; overflow-y:scroll;"></div>
+        <div id="chat-box" style="height:200px; border:1px solid #ccc; overflow-y:scroll; margin-bottom:10px;"></div>
         <input type="text" id="message" placeholder="メッセージを入力">
         <button onclick="sendMessage()">送信</button>
     </div>
@@ -34,30 +34,44 @@
 
 <script>
     function login() {
+        const user = document.getElementById('username').value;
+        const pass = document.getElementById('password').value;
+
+        // IDの制限：英数字とハイフンとアンダースコアのみ
+        const userRegex = /^[a-zA-Z0-9-_]+$/;
+        
+        if (!userRegex.test(user)) {
+            alert("IDは英数字、ハイフン、アンダースコアのみ使用可能です。");
+            return;
+        }
+        if (pass.length < 6) {
+            alert("パスワードは6文字以上で入力してください。");
+            return;
+        }
+        if (user === pass) {
+            alert("IDとパスワードを同じにすることはできません。");
+            return;
+        }
+
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('main-screen').style.display = 'block';
     }
 
     async function sendMessage() {
         const content = document.getElementById('message').value;
+        const nickname = document.getElementById('nickname').value || "名無しさん";
         if (!content) return;
 
-        // ここで裏側のデータベースにデータを送る準備をしています
         try {
             await fetch('/api/send', {
                 method: 'POST',
-                body: JSON.stringify({
-                    content: content,
-                    nickname: document.getElementById('nickname').value
-                })
+                body: JSON.stringify({ content, nickname })
             });
             document.getElementById('message').value = "";
-            alert("送信しました！");
         } catch (e) {
-            alert("エラーが発生しました...");
+            alert("送信エラー");
         }
     }
 </script>
-
 </body>
 </html>
