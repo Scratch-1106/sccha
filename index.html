@@ -3,25 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>sccha チャットルーム（アカウント機能付き）</title>
+    <title>sccha チャットルーム（記憶機能付き）</title>
     <style>
         body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
         .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         
         /* ログイン画面のスタイル */
-        .login-box { text-align: center; padding: 20px 0; }
-        .login-box input { width: 80%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; }
+        #login-screen { text-align: center; padding: 20px 0; }
+        #login-screen input { width: 80%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; }
         
         /* チャット画面のスタイル（最初は非表示） */
-        .chat-area { display: none; }
+        #chat-screen { display: none; }
         .messages { height: 300px; border: 1px solid #ddd; overflow-y: scroll; padding: 10px; margin-bottom: 10px; background: #fafafa; border-radius: 4px; }
         .input-area { display: flex; gap: 10px; }
         .input-area input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
         
+        /* プロフィールエリアのスタイル */
+        .profile-box { background: #e9ecef; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.9em; position: relative; }
+        .profile-edit { display: none; margin-top: 5px; }
+        .profile-edit input { width: 70%; padding: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        
         /* 共通ボタン */
         button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
         button:hover { background: #0056b3; }
-        .user-info { font-size: 0.9em; color: #666; margin-bottom: 10px; text-align: right; }
+        .btn-sm { padding: 3px 8px; font-size: 0.8em; background: #6c757d; }
+        .logout-btn { position: absolute; top: 10px; right: 10px; background: #dc3545; }
+        .logout-btn:hover { background: #bd2130; }
     </style>
 </head>
 <body>
@@ -29,8 +36,7 @@
 <div class="container">
     <h2>sccha チャットルーム</h2>
     
-    <!-- 【1】ログイン・アカウント登録画面 -->
-    <div id="login-screen" class="login-box">
+    <div id="login-screen">
         <h3>アカウントを作成・ログイン</h3>
         <p>チャットで使うユーザー名を決めてください</p>
         <input type="text" id="username-input" placeholder="ユーザー名を入力...">
@@ -38,16 +44,26 @@
         <button onclick="login()">ログインする</button>
     </div>
 
-    <!-- 【2】メインのチャット画面（最初は隠れている） -->
-    <div id="chat-screen" class="chat-area">
-        <div class="user-info">ログイン中: <strong id="current-user"></strong></div>
+    <div id="chat-screen">
         
-        <!-- メッセージが表示される場所 -->
+        <div class="profile-box">
+            <div>ユーザー名: <strong id="current-user"></strong></div>
+            <div>自己紹介: <span id="profile-text">未設定</span> 
+                <button class="btn-sm" onclick="toggleProfileEdit()">変更</button>
+            </div>
+            
+            <div id="profile-edit-fields" class="profile-edit">
+                <input type="text" id="profile-input" placeholder="新しい自己紹介を入力...">
+                <button class="btn-sm" style="background:#28a745;" onclick="saveProfile()">保存</button>
+            </div>
+
+            <button class="btn-sm logout-btn" onclick="logout()">ログアウト</button>
+        </div>
+        
         <div class="messages" id="message-box">
             <div><strong>システム:</strong> チャットルームへようこそ！</div>
         </div>
         
-        <!-- 文字を入力して送る場所 -->
         <div class="input-area">
             <input type="text" id="user-input" placeholder="メッセージを入力...">
             <button onclick="sendMessage()">送信</button>
@@ -57,22 +73,78 @@
 
 <script>
     let myUsername = "";
+    let myProfile = "";
+
+    // 【重要】ページが開いた瞬間、iPadの記憶をチェックする
+    window.onload = function() {
+        const savedName = localStorage.getItem('sccha_username');
+        const savedProfile = localStorage.getItem('sccha_profile');
+
+        if (savedName) {
+            // 記憶があったら自動ログイン
+            myUsername = savedName;
+            myProfile = savedProfile || "よろしくお願いします！";
+            showChatScreen();
+        }
+    };
 
     // ログインボタンを押したときの動き
     function login() {
         const usernameInput = document.getElementById('username-input');
         if (usernameInput.value.trim() !== "") {
             myUsername = usernameInput.value.trim();
+            myProfile = "よろしくお願いします！";
             
-            // 画面を切り替える
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('chat-screen').style.display = 'block';
+            // 【重要】iPadのブラウザに名前とプロフィールを保存する
+            localStorage.setItem('sccha_username', myUsername);
+            localStorage.setItem('sccha_profile', myProfile);
             
-            // ログインした名前を表示
-            document.getElementById('current-user').textContent = myUsername;
+            showChatScreen();
         } else {
             alert("ユーザー名を入力してください！");
         }
+    }
+
+    // チャット画面を表示する共通の関数
+    function showChatScreen() {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('chat-screen').style.display = 'block';
+        document.getElementById('current-user').textContent = myUsername;
+        document.getElementById('profile-text').textContent = myProfile;
+    }
+
+    // プロフィール編集欄の表示切り替え
+    function toggleProfileEdit() {
+        const editFields = document.getElementById('profile-edit-fields');
+        if (editFields.style.display === 'block') {
+            editFields.style.display = 'none';
+        } else {
+            editFields.style.display = 'block';
+            document.getElementById('profile-input').value = myProfile;
+        }
+    }
+
+    // プロフィールを保存する動き
+    function saveProfile() {
+        const profileInput = document.getElementById('profile-input');
+        myProfile = profileInput.value.trim();
+        document.getElementById('profile-text').textContent = myProfile;
+        document.getElementById('profile-edit-fields').style.display = 'none';
+        
+        // 【重要】新しい自己紹介をブラウザに上書き保存する
+        localStorage.setItem('sccha_profile', myProfile);
+    }
+
+    // ログアウト（記憶を消す）
+    function logout() {
+        // 【重要】ブラウザの記憶を消す
+        localStorage.removeItem('sccha_username');
+        localStorage.removeItem('sccha_profile');
+        
+        // 画面をログインに戻す
+        document.getElementById('chat-screen').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'block';
+        document.getElementById('username-input').value = "";
     }
 
     // 送信ボタンを押したときの動き
@@ -81,14 +153,11 @@
         const box = document.getElementById('message-box');
         
         if (input.value.trim() !== "") {
-            // 画面に「ログインしたユーザー名」で文字を追加する
             const newMsg = document.createElement('div');
             newMsg.innerHTML = `<strong>${myUsername}:</strong> ${input.value}`;
             box.appendChild(newMsg);
             
-            // 入力欄を空っぽにする
             input.value = "";
-            // 一番下までスクロール
             box.scrollTop = box.scrollHeight;
         }
     }
