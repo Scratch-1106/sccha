@@ -3,44 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>sccha チャットルーム</title>
+    <title>sccha チャットルーム（アカウント機能付き）</title>
     <style>
         body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
-        .chat-container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        
+        /* ログイン画面のスタイル */
+        .login-box { text-align: center; padding: 20px 0; }
+        .login-box input { width: 80%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; }
+        
+        /* チャット画面のスタイル（最初は非表示） */
+        .chat-area { display: none; }
         .messages { height: 300px; border: 1px solid #ddd; overflow-y: scroll; padding: 10px; margin-bottom: 10px; background: #fafafa; border-radius: 4px; }
         .input-area { display: flex; gap: 10px; }
-        input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        .input-area input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        
+        /* 共通ボタン */
         button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
         button:hover { background: #0056b3; }
+        .user-info { font-size: 0.9em; color: #666; margin-bottom: 10px; text-align: right; }
     </style>
 </head>
 <body>
 
-<div class="chat-container">
+<div class="container">
     <h2>sccha チャットルーム</h2>
     
-    <!-- メッセージが表示される場所 -->
-    <div class="messages" id="message-box">
-        <div><strong>システム:</strong> チャットルームへようこそ！</div>
+    <!-- 【1】ログイン・アカウント登録画面 -->
+    <div id="login-screen" class="login-box">
+        <h3>アカウントを作成・ログイン</h3>
+        <p>チャットで使うユーザー名を決めてください</p>
+        <input type="text" id="username-input" placeholder="ユーザー名を入力...">
+        <br>
+        <button onclick="login()">ログインする</button>
     </div>
-    
-    <!-- 文字を入力して送る場所 -->
-    <div class="input-area">
-        <input type="text" id="user-input" placeholder="メッセージを入力...">
-        <button onclick="sendMessage()">送信</button>
+
+    <!-- 【2】メインのチャット画面（最初は隠れている） -->
+    <div id="chat-screen" class="chat-area">
+        <div class="user-info">ログイン中: <strong id="current-user"></strong></div>
+        
+        <!-- メッセージが表示される場所 -->
+        <div class="messages" id="message-box">
+            <div><strong>システム:</strong> チャットルームへようこそ！</div>
+        </div>
+        
+        <!-- 文字を入力して送る場所 -->
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="メッセージを入力...">
+            <button onclick="sendMessage()">送信</button>
+        </div>
     </div>
 </div>
 
 <script>
-    // 送信ボタンを押したときの動き（仮）
+    let myUsername = "";
+
+    // ログインボタンを押したときの動き
+    function login() {
+        const usernameInput = document.getElementById('username-input');
+        if (usernameInput.value.trim() !== "") {
+            myUsername = usernameInput.value.trim();
+            
+            // 画面を切り替える
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('chat-screen').style.display = 'block';
+            
+            // ログインした名前を表示
+            document.getElementById('current-user').textContent = myUsername;
+        } else {
+            alert("ユーザー名を入力してください！");
+        }
+    }
+
+    // 送信ボタンを押したときの動き
     function sendMessage() {
         const input = document.getElementById('user-input');
         const box = document.getElementById('message-box');
         
         if (input.value.trim() !== "") {
-            // 画面に自分の文字を追加する
+            // 画面に「ログインしたユーザー名」で文字を追加する
             const newMsg = document.createElement('div');
-            newMsg.innerHTML = `<strong>あなた:</strong> ${input.value}`;
+            newMsg.innerHTML = `<strong>${myUsername}:</strong> ${input.value}`;
             box.appendChild(newMsg);
             
             // 入力欄を空っぽにする
