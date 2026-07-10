@@ -1,76 +1,90 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>sccha チャット</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        #login-screen { text-align: center; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f0f2f5; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 600px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h3 { text-align: center; color: #333; }
+        #login-screen { display: block; }
         #main-screen { display: none; }
-        input { width: 90%; padding: 10px; margin: 5px; }
-        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+        .input-group { margin-bottom: 15px; }
+        input { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        button:hover { background-color: #0056b3; }
+        #chat-box { height: 350px; border: 1px solid #eee; overflow-y: scroll; padding: 15px; background: #fafafa; border-radius: 6px; margin-bottom: 15px; }
+        .message { margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .nickname { font-weight: bold; color: #555; margin-right: 8px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="login-screen">
-        <h3>チャットに参加</h3>
-        <input type="text" id="username" placeholder="ID (英数字・-・_)">
-        <input type="password" id="password" placeholder="パスワード (6文字以上)">
-        <input type="text" id="nickname" placeholder="ニックネーム">
-        <br>
-        <button onclick="login()">開始する</button>
+        <h3>ログイン</h3>
+        <div class="input-group">
+            <input type="text" id="id" placeholder="ID (英数字・-・_)">
+            <input type="password" id="pass" placeholder="パスワード (6文字以上)">
+            <input type="text" id="nickname" placeholder="ニックネーム">
+        </div>
+        <button onclick="login()">チャットを開始</button>
     </div>
 
     <div id="main-screen">
         <h3>チャットルーム</h3>
-        <div id="chat-box" style="height:200px; border:1px solid #ccc; overflow-y:scroll; margin-bottom:10px;"></div>
-        <input type="text" id="message" placeholder="メッセージを入力">
+        <div id="chat-box"></div>
+        <input type="text" id="msg" placeholder="メッセージを入力...">
         <button onclick="sendMessage()">送信</button>
     </div>
 </div>
 
 <script>
-    function login() {
-        const user = document.getElementById('username').value;
-        const pass = document.getElementById('password').value;
-
-        // IDの制限：英数字とハイフンとアンダースコアのみ
-        const userRegex = /^[a-zA-Z0-9-_]+$/;
+    async function login() {
+        const id = document.getElementById('id').value;
+        const pass = document.getElementById('pass').value;
         
-        if (!userRegex.test(user)) {
-            alert("IDは英数字、ハイフン、アンダースコアのみ使用可能です。");
-            return;
-        }
-        if (pass.length < 6) {
-            alert("パスワードは6文字以上で入力してください。");
-            return;
-        }
-        if (user === pass) {
-            alert("IDとパスワードを同じにすることはできません。");
-            return;
-        }
+        // 入力ルールチェック
+        const idRegex = /^[a-zA-Z0-9-_]+$/;
+        if (!idRegex.test(id)) { alert("IDは英数字・ハイフン・アンダースコアのみです"); return; }
+        if (pass.length < 6) { alert("パスワードは6文字以上で入力してください"); return; }
+        if (id === pass) { alert("IDとパスワードを同じにしないでください"); return; }
 
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('main-screen').style.display = 'block';
+        const res = await fetch('/api/login', { 
+            method: 'POST', 
+            body: JSON.stringify({id, pass}) 
+        });
+
+        if (res.ok) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-screen').style.display = 'block';
+            setInterval(loadMessages, 3000); // 3秒ごとに更新
+        } else {
+            alert("ログインに失敗しました");
+        }
     }
 
     async function sendMessage() {
-        const content = document.getElementById('message').value;
+        const content = document.getElementById('msg').value;
         const nickname = document.getElementById('nickname').value || "名無しさん";
         if (!content) return;
+        
+        await fetch('/api/send', { 
+            method: 'POST', 
+            body: JSON.stringify({ content, nickname }) 
+        });
+        document.getElementById('msg').value = "";
+        loadMessages();
+    }
 
-        try {
-            await fetch('/api/send', {
-                method: 'POST',
-                body: JSON.stringify({ content, nickname })
-            });
-            document.getElementById('message').value = "";
-        } catch (e) {
-            alert("送信エラー");
-        }
+    async function loadMessages() {
+        const res = await fetch('/api/messages');
+        const data = await res.json();
+        const chatBox = document.getElementById('chat-box');
+        chatBox.innerHTML = data.map(m => 
+            `<div class="message"><span class="nickname">${m.nickname}</span>: ${m.content}</div>`
+        ).join('');
     }
 </script>
 </body>
